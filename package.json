@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "@viz-js/viz": "^3.25.0"
+  },
+  "name": "micrograd",
+  "version": "1.0.0",
+  "description": "",
+  "main": "micrograd.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
