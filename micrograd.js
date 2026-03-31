@@ -26,6 +26,16 @@ class Value {
     return out
   }
 
+  tanh(){
+    let x = this.data;
+    let t = (Math.exp(2*x) - 1) / (Math.exp(2*x) + 1)
+    let out = new Value(t, '', 'tanh', [this]);
+    out._backward = () => {
+      this.grad += (1 - t**2) * out.grad
+    }
+    return out
+  }
+
   backward(){
     let topo = [];
     let visited = new Set();
@@ -90,13 +100,15 @@ function buildDot(root) {
   return dot;
 }
 const h = 0.001
-const a = new Value(2 + h, "a");
-const b = new Value(-3, "b");
+const a = new Value(2, "a");
+const b = new Value(-3 + h, "b");
 const c = a.add(b); c.label = "c";
+c.data += h
 const d = new Value(4, "d");
 const e = d.mul(c); e.label = "e";
-e.backward();
-let dot = buildDot(e);
+const f = e.tanh(); f.label = "f";
+f.backward();
+let dot = buildDot(f);
 
 
 instance().then(viz => {
