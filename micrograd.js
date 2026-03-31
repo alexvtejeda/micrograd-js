@@ -1,14 +1,14 @@
-import { instance } from "/node_modules/@viz-js/viz/src/index.js";
-
-class Value {
+export class Value {
   constructor(data, label = "", op = "", prev = []) {
     this.data = data;
     this.grad = 0;
     this.label = label;
     this._op = op;
-    this._prev = prev; 
+    this._prev = prev;
     this._backward = () => {};
   }
+
+  /*--------- Operations in forward pass with their backpropagation logic ----------*/
   add(other){
     let out = new Value(this.data + other.data, '', '+', [this, other])
     out._backward = () => {
@@ -18,12 +18,42 @@ class Value {
     return out
   }
   mul(other){
+    if(!(other instanceof Value)) other = new Value(other);
     let out = new Value(this.data * other.data, '', '*', [this, other])
     out._backward = () => {
       this.grad += other.data * out.grad;
       other.grad +=  this.data * out.grad;
     }
     return out
+  }
+
+  pow(other){
+    let out = new Value(this.data ** other.data, '', '**', [this]);
+    out._backward = () => {
+      this.grad += other * (this.data ** (other - 1)) * out.grad
+    }
+    return out
+  }
+
+
+  truediv(other){
+    return this.mul(other.pow(new Value(-1, "truediv")))
+  }
+
+  neg(){
+    return this.mul(new Value(-1, "neg"))
+  }
+
+  sub(other){
+    return this.add(other.neg());
+  }
+
+  exp(){
+    let out = new Value(Math.exp(this.data), "", "exp", [this]);
+    out._backward = () => {
+      this.grad = out.grad * out.grad;
+    }
+    return out;
   }
 
   tanh(){
@@ -35,6 +65,7 @@ class Value {
     }
     return out
   }
+
 
   backward(){
     let topo = [];
@@ -51,67 +82,31 @@ class Value {
     buildTopo(this)
     this.grad = 1
     // Reversed loop
-    for(let i = topo.length-1; i >= 0; i--){
+    for(let i = topo.length - 1; i >= 0; i--){
       topo[i]._backward()
     }
   }
 }
 
+// Neurons
 
-function trace(root) {
-  const nodes = new Set();
-  const edges = new Set();
-
-  function build(v) {
-    if (!nodes.has(v)) {
-      nodes.add(v);
-      for (const child of v._prev) {
-        edges.add([child, v]);
-        build(child);
-      }
+class Neuron {
+  constructor(nin){
+    this.w = []
+    for( let i = 0; i <= nin; i++){
+      this.w.push(new Value(Math.random()* 2 - 1))
     }
+    this.b = new Value(Math.random() * 2 - 1)
   }
-
-  build(root);
-  return { nodes, edges };
+  call(x){
+    // weight * x + bias
+    let out
+    for (let i = 0; i <= this.w.length; i++){
+      out = this.w[i].mul(x[i])
+      out.add(b)
+    }
+    return out
+  }
 }
 
-function buildDot(root) {
-  const { nodes, edges } = trace(root);
-
-  let dot = "digraph G {\nrankdir=LR;\n";
-  let nextId = 0;
-  for (const n of nodes) {
-    const uid = (n._id ??= "n" + (nextId++));
-    dot += `${uid} [label="{ ${n.label} | data ${n.data.toFixed(4)} | grad ${n.grad.toFixed(4)} }", shape=record];\n`;
-
-    if (n._op) {
-      const opId = uid + "_op";
-      dot += `${opId} [label="${n._op}"];\n`;
-      dot += `${opId} -> ${uid};\n`;
-    }
-  }
-
-  for (const [n1, n2] of edges) {
-    dot += `${n1._id} -> ${n2._id}_op;\n`;
-  }
-
-  dot += "}";
-  return dot;
-}
-const h = 0.001
-const a = new Value(2, "a");
-const b = new Value(-3 + h, "b");
-const c = a.add(b); c.label = "c";
-c.data += h
-const d = new Value(4, "d");
-const e = d.mul(c); e.label = "e";
-const f = e.tanh(); f.label = "f";
-f.backward();
-let dot = buildDot(f);
-
-
-instance().then(viz => {
-  const svg = viz.renderSVGElement(dot);
-  document.getElementById("graph").appendChild(svg);
-});
+console.log(new Neuron(2));
