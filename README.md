@@ -20,11 +20,11 @@ To be able to visualize our progress I decided to use graphviz, the same graph M
 npm install
 ```
 
-### Run the graph visualization
+### Run the graph visualization (with live reload)
 ```
-npx serve
+npm run dev
 ```
-Open in browser. Each time you make a change you'll have to manually refresh.
+Opens at `localhost:39981`. Auto-refreshes when you save a file.
 
 ### Debug without browser
 ```
