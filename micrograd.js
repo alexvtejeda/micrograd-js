@@ -1,4 +1,4 @@
-import Viz from "/node_modules/@viz-js/viz/lib/viz-standalone.mjs";
+import { instance } from "/node_modules/@viz-js/viz/src/index.js";
 
 class Value {
   constructor(data, label = "", op = "", prev = []) {
@@ -6,9 +6,47 @@ class Value {
     this.grad = 0;
     this.label = label;
     this._op = op;
-    this._prev = prev;
+    this._prev = prev; 
+    this._backward = () => {};
+  }
+  add(other){
+    let out = new Value(this.data + other.data, '', '+', [this, other])
+    out._backward = () => {
+      this.grad += 1 * out.grad;
+      other.grad += 1 * out.grad;
+    }
+    return out
+  }
+  mul(other){
+    let out = new Value(this.data * other.data, '', '*', [this, other])
+    out._backward = () => {
+      this.grad += other.data * out.grad;
+      other.grad +=  this.data * out.grad;
+    }
+    return out
+  }
+
+  backward(){
+    let topo = [];
+    let visited = new Set();
+    let buildTopo = (v) => {
+      if(!visited.has(v)){
+        visited.add(v);
+        for(const child of v._prev){
+          buildTopo(child);
+        }
+        topo.push(v);
+      }
+    }
+    buildTopo(this)
+    this.grad = 1
+    // Reversed loop
+    for(let i = topo.length-1; i >= 0; i--){
+      topo[i]._backward()
+    }
   }
 }
+
 
 function trace(root) {
   const nodes = new Set();
@@ -32,10 +70,10 @@ function buildDot(root) {
   const { nodes, edges } = trace(root);
 
   let dot = "digraph G {\nrankdir=LR;\n";
-
+  let nextId = 0;
   for (const n of nodes) {
-    const uid = (n._id ??= Math.random().toString(36).slice(2));
-    dot += `${uid} [label="{ ${n.label} | data ${n.data} | grad ${n.grad} }", shape=record];\n`;
+    const uid = (n._id ??= "n" + (nextId++));
+    dot += `${uid} [label="{ ${n.label} | data ${n.data.toFixed(4)} | grad ${n.grad.toFixed(4)} }", shape=record];\n`;
 
     if (n._op) {
       const opId = uid + "_op";
@@ -51,14 +89,17 @@ function buildDot(root) {
   dot += "}";
   return dot;
 }
+const h = 0.001
+const a = new Value(2 + h, "a");
+const b = new Value(-3, "b");
+const c = a.add(b); c.label = "c";
+const d = new Value(4, "d");
+const e = d.mul(c); e.label = "e";
+e.backward();
+let dot = buildDot(e);
 
-const a = new Value(2, "a");
-const b = new Value(3, "b");
-const c = new Value(5, "c", "+", [a, b]);
 
-const dot = buildDot(c);
-
-Viz.instance().then(viz => {
+instance().then(viz => {
   const svg = viz.renderSVGElement(dot);
   document.getElementById("graph").appendChild(svg);
 });
