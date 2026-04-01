@@ -1,5 +1,5 @@
 # Micrograd in JS
-This repo is dedicated to translate the [python code](https://github.com/karpathy/nn-zero-to-hero/blob/master/lectures/micrograd/micrograd_lecture_first_half_roughly.ipynb) Andrej Karpathy wrote for us to understand what libraries like Pytorch do behind the scenes. The essence is to understand the nuances of Neural Networks and how they make decisions based on the operations we give them. So far, I added multiplication, addition, tanh, exp, pow, sub, neg and truediv. Currently working on building a small neural net (Neuron class).
+This repo is dedicated to translate the [python code](https://github.com/karpathy/nn-zero-to-hero/blob/master/lectures/micrograd/micrograd_lecture_first_half_roughly.ipynb) Andrej Karpathy wrote for us to understand what libraries like Pytorch do behind the scenes. The essence is to understand the nuances of Neural Networks and how they make decisions based on the operations we give them. So far, I added multiplication, addition, tanh, exp, pow, sub, neg and truediv. I also built a small neural net with Neuron and Layer classes.
 
 ## Core concepts learned
 
@@ -9,7 +9,7 @@ To be able to visualize our progress I decided to use graphviz, the same graph M
 
 ## Project structure
 
-- `micrograd.js` — Value class (autograd engine) and Neuron class. Pure logic, no browser dependencies. Run with `node micrograd.js` to debug.
+- `micrograd.js` — Value class (autograd engine), Neuron and Layer classes. Pure logic, no browser dependencies. Run with `node micrograd.js` to debug.
 - `graphviz.js` — Graph visualization using viz-js. Only runs in the browser.
 - `index.html` — Loads the visualization.
 

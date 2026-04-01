@@ -93,20 +93,34 @@ export class Value {
 class Neuron {
   constructor(nin){
     this.w = []
-    for( let i = 0; i <= nin; i++){
+    for( let i = 0; i < nin; i++){
       this.w.push(new Value(Math.random()* 2 - 1))
     }
     this.b = new Value(Math.random() * 2 - 1)
   }
-  call(x){
-    // weight * x + bias
-    let out
-    for (let i = 0; i <= this.w.length; i++){
-      out = this.w[i].mul(x[i])
-      out.add(b)
-    }
-    return out
+  call(x = []){
+    // sum(weight * x) + bias
+    x = x.map(v => v instanceof Value ? v : new Value(v))
+    const wx = this.w.map((w, i) => w.mul(x[i]));
+    const out = wx.reduce((acc, curr) => acc.add(curr), this.b);
+    return out.tanh()
   }
 }
 
-console.log(new Neuron(2));
+class Layers {
+  constructor(nin, nout){
+    this.neurons = [];
+    for(let i = 0; i < nout; i++){
+      this.neurons.push(new Neuron(nin));
+    }
+  }
+
+  call(x = []){
+    x = x.map(v => v instanceof Value ? v : new Value(v))
+    const outs = this.neurons.map((neurons) => neurons.call(x));
+    return outs
+  }
+
+}
+console.log("With layers: ", new Layers(2, 3).call([2, 3]), "\n=====================\n");
+console.log("Manually: ", new Neuron(2).call([2, 3]));
